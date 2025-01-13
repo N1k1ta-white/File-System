@@ -150,24 +150,26 @@ isFileExist root curr path = case getFile root curr path of
   Just (Directory _ _) -> True
   Nothing -> False
 
--- Copilot
--- Helper to check if redirection is present
+-- Използвана модел: Copilot
+-- Запитване: write code to check for redirection (">"), split arguments into input 
+--            files and an optional output file, and concatenate content from multiple files
+-- Оригинален отговор: не запазил съм го :(
+-- Направени промени: в функция catFiles смених [String] -> String на [FsNode] -> String
 hasRedirection :: [String] -> Bool
 hasRedirection = elem ">"
 
--- Split args into (input files, maybe output file)
 splitArgs :: [String] -> ([String], Maybe String)
 splitArgs args = case break (== ">") args of
     (inputs, ">":output:_) -> (inputs, Just output)
     (inputs, _) -> (inputs, Nothing)
 
--- Get content from multiple files
 catFiles :: [FsNode] -> String
 catFiles files =
     intercalate "\n" $ concatMap (\f -> case f of
         File _ content -> [content]
         Directory _ _ -> []
     ) files
+-- завърша генериран код от Copilot
 
 removeFile :: FsNode -> FsNode -> FsNode -> FsNode
 removeFile root curr@(Directory path contents) file
@@ -185,8 +187,11 @@ isDirectory :: Maybe FsNode -> Bool
 isDirectory (Just (Directory _ _)) = True
 isDirectory _ = False
 
--- Copilot
--- Add helper function for reading multiple lines
+-- Използвана модел: Copilot
+-- Запитване: make function to read lines until a dot (".") 
+--            and return them as a single string
+-- Оригинален отговор: същ
+-- Направени промени: няма
 readUntilDot :: IO String
 readUntilDot = do
     line <- getLine
@@ -197,6 +202,7 @@ readUntilDot = do
             return $ if null rest
                     then line
                     else line ++ "\n" ++ rest
+-- завърша генериран код от Copilot
 
 -- REPL loop
 repl :: FsNode -> FsNode -> IO ()
@@ -309,7 +315,7 @@ execute root command state = case words command of
     catWritingToFile root state file text
   ("cat":args) -> do
         let (inputFiles, mbOutput) = splitArgs args
-        let files = mapMaybe (getFile root state) inputFiles
+        let files = filter (not . isDirectory . Just) $ mapMaybe (getFile root state) inputFiles
         when (length inputFiles /= length files) $ do
           putStrLn "cat: invalid path"
         let content = catFiles files
